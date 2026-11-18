@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,6 +19,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @EntityGraph(attributePaths = {"user", "user.role", "treatmentStage", "treatmentStage.treatmentRoute"})
     @Query("SELECT p FROM Payment p WHERE p.id = :id")
     Optional<Payment> findByIdWithDetails(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"user", "user.role", "treatmentStage", "treatmentStage.treatmentRoute"})
+    Optional<Payment> findByTreatmentStageId(Long treatmentStageId);
+
+    boolean existsByTreatmentStageId(Long treatmentStageId);
+
+    @EntityGraph(attributePaths = {"user", "user.role", "treatmentStage", "treatmentStage.treatmentRoute"})
+    @Query("SELECT p FROM Payment p WHERE p.treatmentStage IS NOT NULL AND p.treatmentStage.treatmentRoute.id = :routeId")
+    List<Payment> findByRouteId(@Param("routeId") Long routeId);
 
     @EntityGraph(attributePaths = {"user", "user.role", "treatmentStage", "treatmentStage.treatmentRoute"})
     Page<Payment> findByUserId(Long userId, Pageable pageable);

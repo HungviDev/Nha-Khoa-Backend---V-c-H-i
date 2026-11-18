@@ -1,5 +1,7 @@
 package com.medical.management.medicalrecords.service;
 
+import com.medical.management.appointments.entity.Appointment;
+import com.medical.management.appointments.repository.AppointmentRepository;
 import com.medical.management.common.exception.ResourceNotFoundException;
 import com.medical.management.common.response.PageResponse;
 import com.medical.management.doctors.entity.Doctor;
@@ -30,6 +32,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     private final DoctorRepository doctorRepository;
     private final MedicalServiceRepository medicalServiceRepository;
     private final TreatmentRouteRepository treatmentRouteRepository;
+    private final AppointmentRepository appointmentRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -72,7 +75,14 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         TreatmentRoute treatmentRoute = null;
         if (request.getTreatmentRouteId() != null) {
             treatmentRoute = treatmentRouteRepository.findById(request.getTreatmentRouteId())
-                    .orElseThrow(() -> new ResourceNotFoundException("TreatmentRoute", "id", request.getTreatmentRouteId()));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("TreatmentRoute", "id", request.getTreatmentRouteId()));
+        }
+
+        Appointment appointment = null;
+        if (request.getAppointmentId() != null) {
+            appointment = appointmentRepository.findById(request.getAppointmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", request.getAppointmentId()));
         }
 
         MedicalRecord record = MedicalRecord.builder()
@@ -80,6 +90,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
                 .doctor(doctor)
                 .service(service)
                 .treatmentRoute(treatmentRoute)
+                .appointment(appointment)
                 .diagnosis(request.getDiagnosis())
                 .build();
 
@@ -107,7 +118,8 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
 
         if (request.getTreatmentRouteId() != null) {
             TreatmentRoute treatmentRoute = treatmentRouteRepository.findById(request.getTreatmentRouteId())
-                    .orElseThrow(() -> new ResourceNotFoundException("TreatmentRoute", "id", request.getTreatmentRouteId()));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("TreatmentRoute", "id", request.getTreatmentRouteId()));
             record.setTreatmentRoute(treatmentRoute);
         }
 

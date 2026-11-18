@@ -17,6 +17,7 @@ import com.medical.management.medicalrecords.repository.MedicalRecordRepository;
 import com.medical.management.services.entity.MedicalService;
 import com.medical.management.services.repository.MedicalServiceRepository;
 import com.medical.management.treatmentroutes.entity.TreatmentRoute;
+import com.medical.management.treatmentroutes.repository.TreatmentRouteRepository;
 import com.medical.management.users.entity.User;
 import com.medical.management.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final UserRepository userRepository;
     private final DoctorRepository doctorRepository;
     private final MedicalServiceRepository medicalServiceRepository;
+    private final TreatmentRouteRepository treatmentRouteRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -176,15 +178,34 @@ public class AppointmentServiceImpl implements AppointmentService {
         MedicalService service = medicalServiceRepository.findById(appointment.getService().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service", "id", appointment.getService().getId()));
 
-        if (request.getStatus().equals(AppointmentStatus.COMPLETED)) {
-            MedicalRecord mediaRecord = MedicalRecord.builder()
-                    .user(user)
-                    .doctor(doctor)
-                    .service(service)
-                    .treatmentRoute(null)
-                    .diagnosis(appointment.getNote())
-                    .build();
-            medicalRecordRepository.save(mediaRecord);
+        if (request.getStatus() == AppointmentStatus.COMPLETED) {
+            // Check if medical record already exists for this appointment (idempotency check)
+            MedicalRecord medicalRecord = medicalRecordRepository.findByAppointmentId(appointment.getId())
+                    .orElseGet(() -> MedicalRecord.builder()
+                            .user(user)
+                            .doctor(doctor)
+                            .service(service)
+                            .appointment(appointment)
+                            .build());
+
+            // Determine diagnosis: request.diagnosis -> request.note -> appointment.note -> default fallback
+            String diagnosisText = "Đã hoàn thành buổi khám và tư vấn điều trị.";
+            if (request.getDiagnosis() != null && !request.getDiagnosis().isBlank()) {
+                diagnosisText = request.getDiagnosis().trim();
+            } else if (request.getNote() != null && !request.getNote().isBlank()) {
+                diagnosisText = request.getNote().trim();
+            } else if (appointment.getNote() != null && !appointment.getNote().isBlank()) {
+                diagnosisText = appointment.getNote().trim();
+            }
+
+            medicalRecord.setDiagnosis(diagnosisText);
+
+            if (request.getTreatmentRouteId() != null) {
+                TreatmentRoute route = treatmentRouteRepository.findById(request.getTreatmentRouteId()).orElse(null);
+                medicalRecord.setTreatmentRoute(route);
+            }
+
+            medicalRecordRepository.save(medicalRecord);
         }
         Appointment updated = appointmentRepository.save(appointment);
 

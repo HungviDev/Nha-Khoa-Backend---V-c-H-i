@@ -14,14 +14,19 @@ import java.util.Optional;
 @Repository
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Long> {
 
-    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute"})
+    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute", "appointment"})
     @Query("SELECT r FROM MedicalRecord r WHERE r.id = :id")
     Optional<MedicalRecord> findByIdWithDetails(@Param("id") Long id);
 
-    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute"})
+    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute", "appointment"})
+    Optional<MedicalRecord> findByAppointmentId(Long appointmentId);
+
+    boolean existsByAppointmentId(Long appointmentId);
+
+    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute", "appointment"})
     Page<MedicalRecord> findByUserId(Long userId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute"})
+    @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute", "appointment"})
     @Query("SELECT r FROM MedicalRecord r WHERE " +
            "(:userId IS NULL OR r.user.id = :userId) AND " +
            "(:doctorId IS NULL OR r.doctor.id = :doctorId) AND " +

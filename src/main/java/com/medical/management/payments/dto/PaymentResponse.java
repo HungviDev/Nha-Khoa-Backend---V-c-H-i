@@ -23,6 +23,8 @@ public class PaymentResponse {
     private Long id;
     private Long userId;
     private UserResponse user;
+    private Long treatmentRouteId;
+    private String treatmentRouteTitle;
     private BigDecimal amount;
     private PaymentMethod method;
     private PaymentStatus status;
@@ -35,10 +37,19 @@ public class PaymentResponse {
         if (payment == null) {
             return null;
         }
+        Long routeId = null;
+        String routeTitle = null;
+        if (payment.getTreatmentStage() != null && payment.getTreatmentStage().getTreatmentRoute() != null) {
+            routeId = payment.getTreatmentStage().getTreatmentRoute().getId();
+            routeTitle = payment.getTreatmentStage().getTreatmentRoute().getTitle();
+        }
+
         return PaymentResponse.builder()
                 .id(payment.getId())
                 .userId(payment.getUser() != null ? payment.getUser().getId() : null)
                 .user(payment.getUser() != null ? UserResponse.fromEntity(payment.getUser()) : null)
+                .treatmentRouteId(routeId)
+                .treatmentRouteTitle(routeTitle)
                 .amount(payment.getAmount())
                 .method(payment.getMethod())
                 .status(payment.getStatus())

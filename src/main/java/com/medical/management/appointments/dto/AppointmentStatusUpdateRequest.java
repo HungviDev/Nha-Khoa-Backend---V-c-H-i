@@ -17,4 +17,8 @@ public class AppointmentStatusUpdateRequest {
     private AppointmentStatus status;
 
     private String note;
+
+    private String diagnosis;
+
+    private Long treatmentRouteId;
 }

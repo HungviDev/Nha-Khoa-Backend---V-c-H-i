@@ -1,5 +1,6 @@
 package com.medical.management.medicalrecords.entity;
 
+import com.medical.management.appointments.entity.Appointment;
 import com.medical.management.doctors.entity.Doctor;
 import com.medical.management.services.entity.MedicalService;
 import com.medical.management.treatmentroutes.entity.TreatmentRoute;
@@ -13,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,6 +55,10 @@ public class MedicalRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "treatment_route_id")
     private TreatmentRoute treatmentRoute;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id")
+    private Appointment appointment;
 
     @Column(name = "diagnosis", nullable = false, columnDefinition = "TEXT")
     private String diagnosis;

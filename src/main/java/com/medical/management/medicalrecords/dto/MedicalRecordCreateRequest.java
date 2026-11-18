@@ -24,6 +24,8 @@ public class MedicalRecordCreateRequest {
 
     private Long treatmentRouteId;
 
+    private Long appointmentId;
+
     @NotBlank(message = "Diagnosis cannot be blank")
     private String diagnosis;
 }

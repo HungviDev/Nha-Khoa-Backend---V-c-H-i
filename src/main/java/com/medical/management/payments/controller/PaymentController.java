@@ -3,9 +3,12 @@ package com.medical.management.payments.controller;
 import com.medical.management.common.constants.AppConstants;
 import com.medical.management.common.response.ApiResponse;
 import com.medical.management.common.response.PageResponse;
+import com.medical.management.payments.dto.AppointmentInvoicePreviewResponse;
+import com.medical.management.payments.dto.CreateAppointmentInvoiceRequest;
 import com.medical.management.payments.dto.PaymentConfirmRequest;
 import com.medical.management.payments.dto.PaymentCreateRequest;
 import com.medical.management.payments.dto.PaymentResponse;
+import com.medical.management.payments.dto.RouteFinancialStatisticsResponse;
 import com.medical.management.payments.entity.PaymentStatus;
 import com.medical.management.payments.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -96,5 +101,45 @@ public class PaymentController {
             @Valid @RequestBody PaymentConfirmRequest request) {
         PaymentResponse confirmed = paymentService.confirmPayment(id, request);
         return ResponseEntity.ok(ApiResponse.success("Payment confirmed successfully", confirmed));
+    }
+
+    // =========================================================================
+    // ROUTE FINANCIAL STATISTICS & APPOINTMENT INVOICE APIS
+    // =========================================================================
+
+    @GetMapping("/route-statistics/{routeId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @Operation(summary = "Get financial statistics for a specific treatment route (completed stages cost, invoiced, paid, unpaid)")
+    public ResponseEntity<ApiResponse<RouteFinancialStatisticsResponse>> getRouteStatistics(@PathVariable Long routeId) {
+        RouteFinancialStatisticsResponse stats = paymentService.getRouteStatistics(routeId);
+        return ResponseEntity.ok(ApiResponse.success("Route financial statistics retrieved successfully", stats));
+    }
+
+    @GetMapping("/route-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @Operation(summary = "Get financial statistics for all treatment routes")
+    public ResponseEntity<ApiResponse<List<RouteFinancialStatisticsResponse>>> getAllRouteStatistics() {
+        List<RouteFinancialStatisticsResponse> stats = paymentService.getAllRouteStatistics();
+        return ResponseEntity.ok(ApiResponse.success("All route financial statistics retrieved successfully", stats));
+    }
+
+    @GetMapping("/appointment/{appointmentId}/invoice-preview")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @Operation(summary = "Preview invoice for an appointment based on completed stages of linked treatment route")
+    public ResponseEntity<ApiResponse<AppointmentInvoicePreviewResponse>> previewAppointmentInvoice(
+            @PathVariable Long appointmentId) {
+        AppointmentInvoicePreviewResponse preview = paymentService.previewAppointmentInvoice(appointmentId);
+        return ResponseEntity.ok(ApiResponse.success("Appointment invoice preview retrieved successfully", preview));
+    }
+
+    @PostMapping("/appointment/{appointmentId}/create-invoice")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @Operation(summary = "Create a unique invoice for an appointment calculating cost from completed stages")
+    public ResponseEntity<ApiResponse<PaymentResponse>> createInvoiceForAppointment(
+            @PathVariable Long appointmentId,
+            @Valid @RequestBody CreateAppointmentInvoiceRequest request) {
+        PaymentResponse created = paymentService.createInvoiceForAppointment(appointmentId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("Invoice created successfully for appointment", created));
     }
 }

@@ -28,6 +28,7 @@ public class MedicalRecordResponse {
     private MedicalServiceResponse service;
     private Long treatmentRouteId;
     private TreatmentRouteResponse treatmentRoute;
+    private Long appointmentId;
     private String diagnosis;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
@@ -46,6 +47,7 @@ public class MedicalRecordResponse {
                 .service(record.getService() != null ? MedicalServiceResponse.fromEntity(record.getService()) : null)
                 .treatmentRouteId(record.getTreatmentRoute() != null ? record.getTreatmentRoute().getId() : null)
                 .treatmentRoute(record.getTreatmentRoute() != null ? TreatmentRouteResponse.fromEntity(record.getTreatmentRoute()) : null)
+                .appointmentId(record.getAppointment() != null ? record.getAppointment().getId() : null)
                 .diagnosis(record.getDiagnosis())
                 .createdAt(record.getCreatedAt())
                 .build();
