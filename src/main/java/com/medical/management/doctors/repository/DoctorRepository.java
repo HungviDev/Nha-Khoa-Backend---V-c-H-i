@@ -24,7 +24,13 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     boolean existsByUserId(Long userId);
 
     @EntityGraph(attributePaths = {"user", "user.role"})
-    @Query("SELECT d FROM Doctor d WHERE " +
+    @Query(value = "SELECT d FROM Doctor d WHERE d.user.role.id = 3 AND " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(d.specialization) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(d.user.fullname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(d.user.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "d.user.phone LIKE CONCAT('%', :keyword, '%'))",
+           countQuery = "SELECT count(d) FROM Doctor d WHERE d.user.role.id = 3 AND " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(d.specialization) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(d.user.fullname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

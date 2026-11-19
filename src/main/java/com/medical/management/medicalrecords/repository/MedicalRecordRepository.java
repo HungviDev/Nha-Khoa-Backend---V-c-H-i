@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -25,6 +26,15 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
 
     @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute", "appointment"})
     Page<MedicalRecord> findByUserId(Long userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"treatmentRoute"})
+    Optional<MedicalRecord> findFirstByUserIdAndTreatmentRouteIsNotNullOrderByIdDesc(Long userId);
+
+    @EntityGraph(attributePaths = {"treatmentRoute"})
+    List<MedicalRecord> findByUserIdAndTreatmentRouteIsNotNullOrderByIdDesc(Long userId);
+
+    @EntityGraph(attributePaths = {"treatmentRoute"})
+    List<MedicalRecord> findByTreatmentRouteId(Long treatmentRouteId);
 
     @EntityGraph(attributePaths = {"user", "doctor", "doctor.user", "service", "treatmentRoute", "appointment"})
     @Query("SELECT r FROM MedicalRecord r WHERE " +

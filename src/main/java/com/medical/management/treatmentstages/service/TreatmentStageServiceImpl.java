@@ -1,6 +1,8 @@
 package com.medical.management.treatmentstages.service;
 
 import com.medical.management.common.exception.ResourceNotFoundException;
+import com.medical.management.medicalrecords.entity.MedicalRecord;
+import com.medical.management.medicalrecords.repository.MedicalRecordRepository;
 import com.medical.management.treatmentroutes.entity.TreatmentRoute;
 import com.medical.management.treatmentroutes.repository.TreatmentRouteRepository;
 import com.medical.management.treatmentstages.dto.TreatmentStageCreateRequest;
@@ -10,17 +12,20 @@ import com.medical.management.treatmentstages.entity.TreatmentStage;
 import com.medical.management.treatmentstages.entity.TreatmentStageStatus;
 import com.medical.management.treatmentstages.repository.TreatmentStageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TreatmentStageServiceImpl implements TreatmentStageService {
 
     private final TreatmentStageRepository treatmentStageRepository;
     private final TreatmentRouteRepository treatmentRouteRepository;
+    private final MedicalRecordRepository medicalRecordRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -98,6 +103,7 @@ public class TreatmentStageServiceImpl implements TreatmentStageService {
         }
 
         TreatmentStage updated = treatmentStageRepository.save(stage);
+        checkAndClearCompletedTreatmentRoute(stage.getTreatmentRoute());
         return TreatmentStageResponse.fromEntity(updated);
     }
 
@@ -109,14 +115,44 @@ public class TreatmentStageServiceImpl implements TreatmentStageService {
 
         stage.setStatus(status);
         TreatmentStage updated = treatmentStageRepository.save(stage);
+        checkAndClearCompletedTreatmentRoute(stage.getTreatmentRoute());
         return TreatmentStageResponse.fromEntity(updated);
     }
 
     @Override
     @Transactional
     public void deleteStage(Long id) {
-        TreatmentStage stage = treatmentStageRepository.findById(id)
+        TreatmentStage stage = treatmentStageRepository.findByIdWithRoute(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TreatmentStage", "id", id));
+        TreatmentRoute route = stage.getTreatmentRoute();
         treatmentStageRepository.delete(stage);
+        checkAndClearCompletedTreatmentRoute(route);
+    }
+
+    private void checkAndClearCompletedTreatmentRoute(TreatmentRoute route) {
+        if (route == null || route.getId() == null) {
+            return;
+        }
+        Long routeId = route.getId();
+        List<TreatmentStage> allStages = treatmentStageRepository.findByTreatmentRouteIdOrderBySequenceOrderAsc(routeId);
+        if (allStages.isEmpty()) {
+            return;
+        }
+
+        // Check if all stages belonging to this treatment route are COMPLETED
+        boolean allCompleted = allStages.stream()
+                .allMatch(s -> s.getStatus() == TreatmentStageStatus.COMPLETED);
+
+        if (allCompleted) {
+            List<MedicalRecord> records = medicalRecordRepository.findByTreatmentRouteId(routeId);
+            if (!records.isEmpty()) {
+                for (MedicalRecord record : records) {
+                    record.setTreatmentRoute(null);
+                }
+                medicalRecordRepository.saveAll(records);
+                log.info("Lộ trình điều trị ID {} đã hoàn tất toàn bộ giai đoạn. Đã set null cột treatment_route_id cho {} hồ sơ bệnh án liên quan.",
+                        routeId, records.size());
+            }
+        }
     }
 }

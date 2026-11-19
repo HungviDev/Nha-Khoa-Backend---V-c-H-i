@@ -4,7 +4,10 @@ import com.medical.management.common.response.PageResponse;
 import com.medical.management.medicalrecords.dto.MedicalRecordCreateRequest;
 import com.medical.management.medicalrecords.dto.MedicalRecordResponse;
 import com.medical.management.medicalrecords.dto.MedicalRecordUpdateRequest;
+import com.medical.management.treatmentroutes.dto.TreatmentRouteResponse;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface MedicalRecordService {
 
@@ -19,4 +22,10 @@ public interface MedicalRecordService {
     MedicalRecordResponse updateMedicalRecord(Long id, MedicalRecordUpdateRequest request);
 
     void deleteMedicalRecord(Long id);
+
+    TreatmentRouteResponse getCurrentTreatmentRouteByUserId(Long userId);
+
+    List<TreatmentRouteResponse> getTreatmentRoutesByUserId(Long userId);
+
+    void checkAndClearCompletedTreatmentRoute(Long routeId);
 }
